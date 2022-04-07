@@ -4,6 +4,7 @@ import requests
 import psycopg2
 import time
 from configparser import ConfigParser
+import export as ef
 
 conn = None
 cur = None
@@ -187,23 +188,40 @@ def try_block(IP, apiCall):
 while True:
     ip_array = get_ip()
 
-    for singleIP in ip_array:
-        values = []
-        values.append(cpu_usage(singleIP))
-        values.append(cpu_idle(singleIP))
 
-        logical_disk = disk_logical(singleIP)
+#EXPORT OF TABLES EVERY DAY AT 22
+    hour = datetime.now()
+    controller_for_single_export = True
+
+    if hour.hour == 22 and controller_for_single_export == True:
+        for single_ip in ip_array:
+            ef.checks_export(single_ip)
+
+        controller_for_single_export = False
+
+
+    if hour.hour == 23:
+        controller_for_single_export = True
+
+
+
+    for single_ip in ip_array:
+        values = []
+        values.append(cpu_usage(single_ip))
+        values.append(cpu_idle(single_ip))
+
+        logical_disk = disk_logical(single_ip)
         for value in logical_disk:
             values.append(value)
         
-        values.append(lan_recived(singleIP))
-        values.append(lan_sent(singleIP))
-        values.append(bytes_recived(singleIP))
-        values.append(bytes_sent(singleIP))
-        ram = ram_usage(singleIP)
+        values.append(lan_recived(single_ip))
+        values.append(lan_sent(single_ip))
+        values.append(bytes_recived(single_ip))
+        values.append(bytes_sent(single_ip))
+        ram = ram_usage(single_ip)
         for value in ram:
             values.append(value)
-        virtual_ram = virtual_usage(singleIP)
+        virtual_ram = virtual_usage(single_ip)
         for value in virtual_ram:
             values.append(value)
         
@@ -225,7 +243,7 @@ while True:
             VALUES (CURRENT_TIMESTAMP, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             '''
 
-            insert_value = (singleIP, values[0][0], values[1][0], values[2], values[4], values[3], values[5], values[6], values[7], values[8], values[9], values[10], values[11], values[12], values[13], values[14])
+            insert_value = (single_ip, values[0][0], values[1][0], values[2], values[4], values[3], values[5], values[6], values[7], values[8], values[9], values[10], values[11], values[12], values[13], values[14])
 
             cur.execute(insert_script, insert_value)
 

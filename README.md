@@ -1,13 +1,16 @@
 Monitoring hosts on a network using Python, PostgreSQL and NCPA.
-
-
+------------------------------
 Required libraries: requests, psycopg2
+-
+
 
 First of all, we need to create an instance in the database, which contains two tables.
+
   -One for the list of all the IPs to be monitored, with various information
+  
   -One for all the checks made on those devices.
 
-
+--------------------------
 
 Then install the native NCPA agent on the hosts concerned, noting the KEY used and the IP of the machine.
 
@@ -17,8 +20,9 @@ At this point, once the program has been started, it should automatically retrie
 
 
 IMPORTANT
-To ensure that the system allows the saving of an error log I added paths for writing these errors in txt files
-Change the path with a link to a folder in the device to make sure this function works properly
+---
+
+To ensure that the system allows the saving of an error log I added paths for writing these errors in txt files. Change the path with a link to a folder in the device to make sure this function works properly
 
 There are two in the request phase to the hosts (in the two except blocks)
 
@@ -29,4 +33,5 @@ In addition, for the export phase, make sure you also change the folder indicate
 
 
 TO DO:
+-
 -Add the possibility of making simultaneous calls.

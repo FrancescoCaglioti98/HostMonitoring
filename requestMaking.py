@@ -27,8 +27,7 @@ def get_ip():
         ip_array = []
         
         for ip in cur.fetchall():
-            new_ip = ip[0][0:-3]
-            ip_array.append(new_ip)
+            ip_array.append(ip[0][0:-3])
 
         conn.commit()
     except Exception as error:
@@ -56,14 +55,36 @@ def cpu_usage(IP):
     else:
         return [-1]
     
+def cpu_user(IP):
+    api_call = '/cpu/user?aggregate=avg&delta=true&token=myToken'
+    user = try_block(IP, api_call)
+
+    if user != -1:
+        jason = user.json()
+        userTime = jason['user'][0]
+        return userTime
+    else:
+        return [-1]
+
 def cpu_idle(IP):
-    api_call = '/cpu/idle?aggregate=avg&token=myToken'
+    api_call = '/cpu/idle?aggregate=avg&delta=true&token=myToken'
     idle = try_block(IP, api_call)
 
     if idle != -1:
         jason = idle.json()
         idleTime = jason['idle'][0]
         return idleTime
+    else:
+        return [-1]
+
+def cpu_system(IP):
+    api_call = '/cpu/system?aggregate=avg&delta=true&token=myToken'
+    system = try_block(IP, api_call)
+
+    if system != -1:
+        jason = system.json()
+        systemTime = jason['system'][0]
+        return systemTime
     else:
         return [-1]
 
@@ -75,13 +96,10 @@ def disk_logical(IP):
     if disk != -1:
         jason = disk.json()
 
-        used = jason['C:|']['used'][0]
-        total = jason["C:|"]['total'][0]
-        free = jason["C:|"]['free'][0]
         array = []
-        array.append(used)
-        array.append(total)
-        array.append(free)
+        array.append(jason['C:|']['used'][0])
+        array.append(jason["C:|"]['total'][0])
+        array.append(jason["C:|"]['free'][0])
 
         return array
     else:
@@ -116,14 +134,11 @@ def ram_usage(IP):
 
     if ram != -1:
         jason = ram.json()
-        used = jason['swap']['used'][0]
-        total = jason["swap"]['free'][0]
-        free = jason["swap"]['total'][0]
 
         array = []
-        array.append(used)
-        array.append(total)
-        array.append(free)
+        array.append(jason['swap']['used'][0])
+        array.append(jason["swap"]['free'][0])
+        array.append(jason["swap"]['total'][0])
         return array
     else:
         return [-1,-1,-1]
@@ -134,14 +149,10 @@ def virtual_usage(IP):
 
     if virtual != -1:
         jason = virtual.json()
-        used = jason['virtual']['used'][0]
-        total = jason["virtual"]['free'][0]
-        free = jason["virtual"]['total'][0]
-
         array = []
-        array.append(used)
-        array.append(total)
-        array.append(free)
+        array.append(jason['virtual']['used'][0])
+        array.append(jason["virtual"]['free'][0])
+        array.append(jason["virtual"]['total'][0])
         return array
     else:
         return [-1,-1,-1]
@@ -224,6 +235,10 @@ while True:
         virtual_ram = virtual_usage(single_ip)
         for value in virtual_ram:
             values.append(value)
+
+        
+        values.append(cpu_user(single_ip))
+        values.append(cpu_system(single_ip))
         
         try:
             FILE = 'config.ini'
@@ -239,11 +254,11 @@ while True:
             cur = conn.cursor()
 
             insert_script = '''
-            INSERT INTO checks (time_of_check, ip, cpu_percentage_usage, cpu_idle, disk_used, disk_free, disk_total, lan_recived, lan_sent, wifi_recived, wifi_sent, ram_used, ram_free, ram_total, ram_virtual_used, ram_virtual_free, ram_virtual_total)
-            VALUES (CURRENT_TIMESTAMP, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO checks (time_of_check, ip, cpu_percentage_usage, cpu_idle, disk_used, disk_free, disk_total, lan_recived, lan_sent, wifi_recived, wifi_sent, ram_used, ram_free, ram_total, ram_virtual_used, ram_virtual_free, ram_virtual_total, cpu_system_usage, cpu_user_usage)
+            VALUES (CURRENT_TIMESTAMP, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             '''
 
-            insert_value = (single_ip, values[0][0], values[1][0], values[2], values[4], values[3], values[5], values[6], values[7], values[8], values[9], values[10], values[11], values[12], values[13], values[14])
+            insert_value = (single_ip, values[0][0], values[1][0], values[2], values[4], values[3], values[5], values[6], values[7], values[8], values[9], values[10], values[11], values[12], values[13], values[14], values[16][0], values[15][0])
 
             cur.execute(insert_script, insert_value)
 
